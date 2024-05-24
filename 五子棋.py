@@ -6,19 +6,39 @@ import pygame
 # 初始化
 pygame.init()
 # 设置窗口大小
-screen = pygame.display.set_mode((600, 600))
+screen = pygame.display.set_mode((600, 600+50))
 # 设置窗口标题
 pygame.display.set_caption("五子棋")
 
 # 定义颜色
 white = (255, 255, 255)
 black = (0, 0, 0)
-# blue = (100, 225, 255)
+blue = (100, 225, 255)
 brown = (255, 225, 160)
 
 # 定义棋盘大小
 board_size = 15
 cell_size = 600 // board_size
+
+
+# 定义按钮类
+class Button:
+    def __init__(self, text, x, y, width, height, fun):
+        self.text = text  # 文本
+        self.rect = pygame.Rect(x, y, width, height)  # 按钮的矩形区域
+        self.fun = fun  # 点击按钮时调用回调函数
+        self.color = blue  # 按钮背景
+
+    def draw(self, screens):
+        pygame.draw.rect(screens, self.color, self.rect)  # 绘制按钮的矩形
+        font = pygame.font.SysFont(None, size=36)  # 创建一个字体对象
+        text_surface = font.render(self.text, True, black)  # 渲染文本为图像
+        text_rect = text_surface.get_rect(center=self.rect.center)  # 中心对齐到文本中心
+        screens.blit(text_surface, text_rect)  # 将文本图像绘制到屏幕上
+
+    def handle_event(self):
+        global board, index  # 导入全局变量
+        board, index = self.fun()
 
 
 # 建立一个二维列表存储/表示数据
@@ -50,13 +70,23 @@ def seele(nums, num, i, j):
 
 
 # 弹出胜利窗口/已经下满
-def show_win_message(winner):  # 现在只写了获胜弹窗
+def show_win_message(winner, size):
     messagebox.showinfo("游戏结束", f"{winner}获胜了喵!")
-    pygame.quit()
-    sys.exit()
+    nums = [[0 for _ in range(size)] for _ in range(size)]
+    return nums
 
 
-# 检查是否有空格
+# 制作按钮和对应弹窗
+def button_restart(size, nums):
+    if nums == [[0]*size]*size:
+        pass
+    else:
+        messagebox.showinfo("Restart", "重置了喵!")
+        nums = [[0 for _ in range(size)] for _ in range(size)]
+    return nums, 1
+
+
+# 检查是否有空格,用以判断平局
 def has_no_empty_list(nums):
     for i in range(board_size):
         for j in range(board_size):
@@ -65,14 +95,17 @@ def has_no_empty_list(nums):
     return True
 
 
-# 弹出"游戏结束，已下满,平局"
-def show_draw_message():
+# 弹出"已下满,平局"
+def show_draw_message(size):
     messagebox.showinfo("游戏结束", "已下满,平局。")
-    pygame.quit()
-    sys.exit()
+    nums = [[0 for _ in range(size)] for _ in range(size)]
+    return nums
 
 
 index = 1  # 判断先后手下棋
+# 绘制按钮
+restart = Button("Restart", 50, 600, 100, 25, fun=lambda: button_restart(board_size, board))
+
 # 正在下的棋子
 row_d = 0
 col_d = 0
@@ -85,7 +118,7 @@ while True:
             pygame.quit()
             sys.exit()
         # 鼠标点击
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_x, mouse_y = event.pos
             if 0 <= mouse_x <= 600 and 0 <= mouse_y <= 600:
                 row_d = mouse_y // cell_size
@@ -103,6 +136,9 @@ while True:
                             win = 2
                     if has_no_empty_list(board):
                         win = 3
+            if 50 <= mouse_x <= 150 and 600 <= mouse_y <= 625:
+                restart.handle_event()
+
     # 填充背景颜色
     screen.fill(brown)
     # 画格子
@@ -112,6 +148,19 @@ while True:
     for col in range(board_size):
         pygame.draw.line(screen, black, (col*cell_size+cell_size//2, 0+cell_size//2),
                          (col*cell_size+cell_size//2, 600-cell_size//2))
+
+    # 绘制特殊五点
+    pygame.draw.circle(screen, black,
+                       (600//2, 600//2), 5)
+    pygame.draw.circle(screen, black,
+                       (cell_size*3+cell_size//2, cell_size*3+cell_size//2), 5)
+    pygame.draw.circle(screen, black,
+                       (cell_size*3+cell_size//2, 600-(cell_size*3+cell_size//2)), 5)
+    pygame.draw.circle(screen, black,
+                       (600-(cell_size*3+cell_size//2), cell_size*3+cell_size//2), 5)
+    pygame.draw.circle(screen, black,
+                       (600-(cell_size*3+cell_size//2), 600-(cell_size*3+cell_size//2)), 5)
+
     # 绘制棋子
     for row in range(board_size):
         for col in range(board_size):
@@ -120,16 +169,25 @@ while True:
                 pygame.draw.circle(screen, piece_color,
                                    (col*cell_size+cell_size//2, row*cell_size+cell_size//2), cell_size//2-2)
 
+    # 绘制按钮
+    restart.draw(screen)
+
     # 刷新屏幕
     pygame.display.flip()
 
     # 判断下棋方是否胜利或平局
-    if win == 1:
-        show_win_message("黑棋")
-    elif win == 2:
-        show_win_message("白棋")
-    elif win == 3:
-        show_draw_message()
+    if win == 1:  # 黑棋胜
+        board = show_win_message("黑棋", board_size)
+        win = 0
+        index = 1
+    elif win == 2:  # 白棋胜
+        board = show_win_message("白棋", board_size)
+        win = 0
+        index = 1
+    elif win == 3:  # 平局
+        board = show_draw_message(board_size)
+        win = 0
+        index = 1
 
     # 帧率
     pygame.time.Clock().tick(30)
