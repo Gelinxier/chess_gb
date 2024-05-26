@@ -128,7 +128,7 @@ while True:
         # 鼠标点击
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_x, mouse_y = event.pos
-            if 0 <= mouse_x <= 600 and 0 <= mouse_y <= 600:
+            if 0 <= mouse_x < 600 and 0 <= mouse_y < 600:
                 r = mouse_y // cell_size
                 c = mouse_x // cell_size
                 if board[r][c] == 0:
@@ -149,10 +149,11 @@ while True:
                     if has_no_empty_list(board):
                         win = 3
             # restart
-            if 50 <= mouse_x <= 150 and 600 < mouse_y <= 625:
+            if 50 <= mouse_x <= 150 and 600 <= mouse_y <= 625:
                 restart.handle_event()
+                row_d, col_d = -1, -1
             # withdraw
-            if 400 <= mouse_x <= 500 and 600 < mouse_y <= 625:
+            if 400 <= mouse_x <= 500 and 600 <= mouse_y <= 625:
                 if len(ac) > 1:
                     board[ac[-1][0]][ac[-1][1]] = 0
                     index = ac[-1][2]
@@ -214,16 +215,19 @@ while True:
         win = 0
         index = 1
         row_d, col_d = -1, -1
+        ac = []
     elif win == 2:  # 白棋胜
         board = show_win_message("白棋", board_size)
         win = 0
         index = 1
         row_d, col_d = -1, -1
+        ac = []
     elif win == 3:  # 平局
         board = show_draw_message(board_size)
         win = 0
         index = 1
         row_d, col_d = -1, -1
+        ac = []
 
     # 帧率
-    pygame.time.Clock().tick(30)
+    pygame.time.Clock().tick(60)
