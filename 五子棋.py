@@ -230,4 +230,4 @@ while True:
         ac = []
 
     # 帧率
-    pygame.time.Clock().tick(60)
+    pygame.time.Clock().tick(30)
